@@ -23,14 +23,15 @@
     font-size:36px;
     letter-spacing:0.6px;
     font-family: 'Oswald', sans-serif;
-    color: rgb(20, 204, 153);
+    transition: color 2s ease-in-out;
   }
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   .panel{
     background:var(--card);
     border-radius:10px;padding:12px;
     box-shadow:0 6px 20px rgba(2,6,23,0.6);
-    min-height:220px;display:flex;flex-direction:column;
+    min-height:380px;
+    display:flex;flex-direction:column;
   }
   .controls{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
   .controls input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit}
@@ -59,7 +60,7 @@
       color: #e6eef8;
       cursor: pointer;
   }
-  @media(max-width:840px){.grid{grid-template-columns:1fr}.wrap{padding:8px}}
+  @media(max-width:840px){.grid{grid-template-columns:1fr}.wrap{padding:8px)}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,7 +117,7 @@
   <div class="crossfader">
     <div class="slider-row">
       <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Left</div>
-      <input id="crossfade" type="range" min="0" max="100" value="20" />
+      <input id="crossfade" type="range" min="0" max="100" value="0" />
       <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Right</div>
     </div>
 
@@ -138,6 +139,99 @@ let leftPlayer, rightPlayer;
 let leftVideoId = null, rightVideoId = null;
 let leftReady=false, rightReady=false;
 let fadeInterval = null;
+let autoCheckInterval = null;
+
+let leftPlayTriggered = false;
+let rightPlayTriggered = false;
+let leftFadeTriggered = false;
+let rightFadeTriggered = false;
+
+const PLAY_THRESHOLD = 15;
+const FADE_THRESHOLD = 10;
+
+// Title color change logic
+const title = document.querySelector('h1');
+const colors = ['#60a5fa', '#34d399', '#facc15', '#a78bfa', '#ff5f5f'];
+let colorIndex = 0;
+
+setInterval(() => {
+    title.style.color = colors[colorIndex];
+    colorIndex = (colorIndex + 1) % colors.length;
+}, 5000);
+
+// Priming function to force API to get video duration
+function primeVideo(player, side) {
+  if (player && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+    player.playVideo();
+    setTimeout(() => {
+      player.pauseVideo();
+      updateStatus(side, 'Primed');
+    }, 100);
+  }
+}
+
+// Automatic Crossfade Logic
+function checkAndAutoCrossfade() {
+    // Left Player Check
+    if (leftPlayer && leftReady && leftPlayer.getPlayerState() === YT.PlayerState.PLAYING && leftVideoId) {
+        let duration = leftPlayer.getDuration();
+        if (duration === 0) {
+            primeVideo(leftPlayer, 'left');
+            return;
+        }
+        
+        const remaining = duration - leftPlayer.getCurrentTime();
+
+        // 1. Check for Play Threshold (15 seconds)
+        if (remaining > 0 && remaining <= PLAY_THRESHOLD && rightVideoId && !rightPlayTriggered) {
+            playRightVideo();
+            rightPlayTriggered = true;
+        }
+
+        // 2. Check for Fade Threshold (10 seconds)
+        if (remaining > 0 && remaining <= FADE_THRESHOLD && cross.value !== "100" && !leftFadeTriggered) {
+            smoothCrossfade(100);
+            leftFadeTriggered = true;
+        }
+    }
+
+    // Right Player Check
+    if (rightPlayer && rightReady && rightPlayer.getPlayerState() === YT.PlayerState.PLAYING && rightVideoId) {
+        let duration = rightPlayer.getDuration();
+        if (duration === 0) {
+            primeVideo(rightPlayer, 'right');
+            return;
+        }
+
+        const remaining = duration - rightPlayer.getCurrentTime();
+
+        // 1. Check for Play Threshold (15 seconds)
+        if (remaining > 0 && remaining <= PLAY_THRESHOLD && leftVideoId && !leftPlayTriggered) {
+            playLeftVideo();
+            leftPlayTriggered = true;
+        }
+
+        // 2. Check for Fade Threshold (10 seconds)
+        if (remaining > 0 && remaining <= FADE_THRESHOLD && cross.value !== "0" && !rightFadeTriggered) {
+            smoothCrossfade(0);
+            rightFadeTriggered = true;
+        }
+    }
+}
+
+function startAutoCheck() {
+    if (autoCheckInterval) clearInterval(autoCheckInterval);
+    leftPlayTriggered = false;
+    rightPlayTriggered = false;
+    leftFadeTriggered = false;
+    rightFadeTriggered = false;
+    autoCheckInterval = setInterval(checkAndAutoCrossfade, 1000);
+}
+
+function stopAutoCheck() {
+    if (autoCheckInterval) clearInterval(autoCheckInterval);
+    autoCheckInterval = null;
+}
 
 function onYouTubeIframeAPIReady(){
   leftPlayer = new YT.Player('leftPlayerWrap', {
@@ -145,7 +239,10 @@ function onYouTubeIframeAPIReady(){
     width: '100%',
     playerVars:{'controls':1,'rel':0,'modestbranding':1,'playsinline':1},
     events:{
-      'onReady': (e)=>{ leftReady=true; updateStatus('left','Ready'); },
+      'onReady': (e)=>{ 
+          leftReady=true; 
+          updateStatus('left','Ready'); 
+      },
       'onStateChange': (e)=>{ }
     }
   });
@@ -185,9 +282,13 @@ document.getElementById('loadLeftBtn').addEventListener('click', ()=>{
   leftVideoId = id;
   if(leftPlayer && leftReady){
     leftPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
-    leftPlayer.setVolume(100);
-    document.getElementById('leftVolLabel').textContent = '100';
+    applyCrossfade(); 
     updateStatus('left','Loaded');
+    primeVideo(leftPlayer, 'left'); 
+    leftPlayTriggered = false;
+    rightPlayTriggered = false;
+    leftFadeTriggered = false;
+    rightFadeTriggered = false;
   } else {
     setTimeout(()=>{ document.getElementById('loadLeftBtn').click(); }, 300);
   }
@@ -200,27 +301,83 @@ document.getElementById('loadRightBtn').addEventListener('click', ()=>{
   rightVideoId = id;
   if(rightPlayer && rightReady){
     rightPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
-    rightPlayer.setVolume(0);
-    document.getElementById('rightVolLabel').textContent = '0';
+    applyCrossfade(); 
     updateStatus('right','Loaded');
+    primeVideo(rightPlayer, 'right');
+    leftPlayTriggered = false;
+    rightPlayTriggered = false;
+    leftFadeTriggered = false;
+    rightFadeTriggered = false;
   } else {
     setTimeout(()=>{ document.getElementById('loadRightBtn').click(); }, 300);
   }
 });
 
-document.getElementById('playLeft').addEventListener('click', ()=>{ if(leftPlayer && leftVideoId) { leftPlayer.playVideo(); updateStatus('left','Playing'); } });
-document.getElementById('pauseLeft').addEventListener('click', ()=>{ if(leftPlayer) { leftPlayer.pauseVideo(); updateStatus('left','Paused'); } });
-document.getElementById('playRight').addEventListener('click', ()=>{ if(rightPlayer && rightVideoId) { rightPlayer.playVideo(); updateStatus('right','Playing'); } });
-document.getElementById('pauseRight').addEventListener('click', ()=>{ if(rightPlayer) { rightPlayer.pauseVideo(); updateStatus('right','Paused'); } });
+document.getElementById('leftUrl').addEventListener('input', (event) => {
+    const url = event.target.value.trim();
+    if (extractVideoID(url)) {
+        document.getElementById('loadLeftBtn').click();
+    }
+});
+
+document.getElementById('rightUrl').addEventListener('input', (event) => {
+    const url = event.target.value.trim();
+    if (extractVideoID(url)) {
+        document.getElementById('loadRightBtn').click();
+    }
+});
+
+document.getElementById('playLeft').addEventListener('click', ()=>{
+  playLeftVideo();
+});
+document.getElementById('pauseLeft').addEventListener('click', ()=>{ 
+    if(leftPlayer) { 
+        leftPlayer.pauseVideo(); 
+        updateStatus('left','Paused');
+        stopAutoCheck();
+    }
+});
+
+document.getElementById('playRight').addEventListener('click', ()=>{
+    playRightVideo();
+});
+document.getElementById('pauseRight').addEventListener('click', ()=>{ 
+    if(rightPlayer) { 
+        rightPlayer.pauseVideo(); 
+        updateStatus('right','Paused');
+        stopAutoCheck();
+    }
+});
+
+function playLeftVideo() {
+  if (leftPlayer && leftVideoId) {
+    leftPlayer.playVideo();
+    applyCrossfade();
+    updateStatus('left', 'Playing');
+    startAutoCheck();
+  }
+}
+
+function playRightVideo() {
+  if (rightPlayer && rightVideoId) {
+    rightPlayer.playVideo();
+    applyCrossfade();
+    updateStatus('right', 'Playing');
+    startAutoCheck();
+  }
+}
 
 document.getElementById('playBoth').addEventListener('click', ()=>{
-  if(leftPlayer && leftVideoId){ leftPlayer.playVideo(); updateStatus('left','Playing'); }
-  if(rightPlayer && rightVideoId){ rightPlayer.playVideo(); updateStatus('right','Playing'); }
+  if(leftPlayer && leftVideoId){ playLeftVideo(); }
+  if(rightPlayer && rightVideoId){ playRightVideo(); }
+  applyCrossfade(); 
 });
+
 document.getElementById('pauseBoth').addEventListener('click', ()=>{
   if(leftPlayer) leftPlayer.pauseVideo();
   if(rightPlayer) rightPlayer.pauseVideo();
   updateStatus('left','Paused'); updateStatus('right','Paused');
+  stopAutoCheck();
 });
 
 document.getElementById('swapLR').addEventListener('click', ()=>{
@@ -259,7 +416,7 @@ function smoothCrossfade(targetValue) {
         }
         cross.value = currentValue;
         applyCrossfade();
-    }, 20); // 20ms interval for smooth transition
+    }, 20);
 }
 
 function smoothCrossfadeLeft() {
@@ -269,7 +426,6 @@ function smoothCrossfadeLeft() {
 function smoothCrossfadeRight() {
     smoothCrossfade(100);
 }
-
 
 function seekVideo(side, seconds) {
     let player;
@@ -291,7 +447,12 @@ function updateStatus(side, text){
   else document.getElementById('rightStatus').textContent = text;
 }
 
-window.addEventListener('load', ()=>{ applyCrossfade(); updateStatus('left','Idle'); updateStatus('right','Idle'); });
+window.addEventListener('load', ()=>{ 
+    applyCrossfade(); 
+    updateStatus('left','Idle'); 
+    updateStatus('right','Idle'); 
+});
 </script>
 </body>
-</html>
+  </html>
+  
