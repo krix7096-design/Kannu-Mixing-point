@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kannu Jaat Mixer</title>
+<style>
+  :root{
+    --bg:#0f1720;
+    --card:#0b1220;
+    --accent:#334155;
+    --muted:#94a3b8;
+    --btn:#1e293b;
+    --primary:#60a5fa;
+    --glass: rgba(255,255,255,0.03);
+  }
+  *{box-sizing:border-box;font-family:Inter,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#071021);color:#cbd5e1;min-height:100vh;padding:18px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  header{text-align:center;padding:8px 0 20px;}
+  h1{
+    margin:0;
+    font-size:36px;
+    letter-spacing:0.6px;
+    font-family: 'Oswald', sans-serif;
+    color: rgb(20, 204, 153);
+  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .panel{
+    background:var(--card);
+    border-radius:10px;padding:12px;
+    box-shadow:0 6px 20px rgba(2,6,23,0.6);
+    min-height:220px;display:flex;flex-direction:column;
+  }
+  .controls{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+  .controls input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit}
+  .controls button{padding:8px 10px;border-radius:8px;border:none;background:var(--btn);color:#e6eef8;cursor:pointer}
+  .video-frame{flex:1;background:#000;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--muted);font-size:13px;}
+  .crossfader{margin:18px 0;background:linear-gradient(90deg,#0b1220 0%,#051021);padding:12px;border-radius:12px;}
+  .slider-row{display:flex;gap:12px;align-items:center;}
+  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:8px}
+  .btn-row{display:flex;gap:10px;margin-top:12px;justify-content:center;}
+  .btn{padding:8px 12px;border-radius:999px;border:none;background:var(--primary);color:#042027;cursor:pointer}
+  .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  .fade-btn{padding:8px 12px;border-radius:999px;border:none;background:var(--primary);color:#042027;cursor:pointer;margin-top:10px;}
+  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+  .timeline-controls {
+      display: flex;
+      gap: 5px;
+      margin-top: 8px;
+  }
+  .timeline-controls button {
+      padding: 5px 8px;
+      font-size: 12px;
+      border-radius: 5px;
+      border: none;
+      background: var(--btn);
+      color: #e6eef8;
+      cursor: pointer;
+  }
+  @media(max-width:840px){.grid{grid-template-columns:1fr}.wrap{padding:8px}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Kannu Jaat mixing Point</h1>
+  </header>
+
+  <div class="grid">
+    <div class="panel" id="leftPanel">
+      <div class="controls">
+        <input id="leftUrl" placeholder="Left video URL (YouTube)" />
+        <button id="loadLeftBtn">Load</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="btn secondary" id="playLeft">Play</button>
+        <button class="btn secondary" id="pauseLeft">Pause</button>
+      </div>
+      <div class="video-frame" id="leftPlayerWrap">
+        <div style="color:var(--muted);font-size:14px">Left player</div>
+      </div>
+      <div class="timeline-controls">
+        <button onclick="seekVideo('left', -10)">-10s</button>
+        <button onclick="seekVideo('left', 10)">+10s</button>
+        <button onclick="seekVideo('left', 'reset')">Reset</button>
+      </div>
+      <div class="meta"><div>Vol: <span id="leftVolLabel">100</span></div><div id="leftStatus">Idle</div></div>
+    </div>
+
+    <div class="panel" id="rightPanel">
+      <div class="controls">
+        <input id="rightUrl" placeholder="Right video URL (YouTube)" />
+        <button id="loadRightBtn">Load</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="btn secondary" id="playRight">Play</button>
+        <button class="btn secondary" id="pauseRight">Pause</button>
+      </div>
+      <div class="video-frame" id="rightPlayerWrap">
+        <div style="color:var(--muted);font-size:14px">Right player</div>
+      </div>
+      <div class="timeline-controls">
+        <button onclick="seekVideo('right', -10)">-10s</button>
+        <button onclick="seekVideo('right', 10)">+10s</button>
+        <button onclick="seekVideo('right', 'reset')">Reset</button>
+      </div>
+      <div class="meta"><div>Vol: <span id="rightVolLabel">0</span></div><div id="rightStatus">Idle</div></div>
+    </div>
+  </div>
+
+  <div class="crossfader">
+    <div class="slider-row">
+      <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Left</div>
+      <input id="crossfade" type="range" min="0" max="100" value="20" />
+      <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Right</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" id="playBoth">Play Both</button>
+      <button class="btn secondary" id="pauseBoth">Pause Both</button>
+      <button class="btn secondary" id="swapLR">Swap L ↔ R</button>
+      <button class="btn fade-btn" onclick="smoothCrossfadeLeft()">Fade Left</button>
+      <button class="btn fade-btn" onclick="smoothCrossfadeRight()">Fade Right</button>
+    </div>
+  </div>
+
+  <footer>Serve this file over <strong>http(s)</strong> for reliable embedding. Local server recommended.</footer>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+let leftPlayer, rightPlayer;
+let leftVideoId = null, rightVideoId = null;
+let leftReady=false, rightReady=false;
+let fadeInterval = null;
+
+function onYouTubeIframeAPIReady(){
+  leftPlayer = new YT.Player('leftPlayerWrap', {
+    height: '100%',
+    width: '100%',
+    playerVars:{'controls':1,'rel':0,'modestbranding':1,'playsinline':1},
+    events:{
+      'onReady': (e)=>{ leftReady=true; updateStatus('left','Ready'); },
+      'onStateChange': (e)=>{ }
+    }
+  });
+
+  rightPlayer = new YT.Player('rightPlayerWrap', {
+    height: '100%',
+    width: '100%',
+    playerVars:{'controls':1,'rel':0,'modestbranding':1,'playsinline':1},
+    events:{
+      'onReady': (e)=>{ rightReady=true; updateStatus('right','Ready'); },
+      'onStateChange': (e)=>{ }
+    }
+  });
+}
+
+function extractVideoID(url){
+  if(!url) return null;
+  const idOnly = url.match(/^[A-Za-z0-9_-]{11}$/);
+  if(idOnly) return idOnly[0];
+  const reg = [
+    /v=([A-Za-z0-9_-]{11})/,
+    /youtu\.be\/([A-Za-z0-9_-]{11})/,
+    /\/embed\/([A-Za-z0-9_-]{11})/,
+    /shorts\/([A-Za-z0-9_-]{11})/
+  ];
+  for(let r of reg){
+    const m = url.match(r);
+    if(m && m[1]) return m[1];
+  }
+  return null;
+}
+
+document.getElementById('loadLeftBtn').addEventListener('click', ()=>{
+  const url = document.getElementById('leftUrl').value.trim();
+  const id = extractVideoID(url);
+  if(!id){ alert('Invalid left YouTube URL/ID'); return; }
+  leftVideoId = id;
+  if(leftPlayer && leftReady){
+    leftPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
+    leftPlayer.setVolume(100);
+    document.getElementById('leftVolLabel').textContent = '100';
+    updateStatus('left','Loaded');
+  } else {
+    setTimeout(()=>{ document.getElementById('loadLeftBtn').click(); }, 300);
+  }
+});
+
+document.getElementById('loadRightBtn').addEventListener('click', ()=>{
+  const url = document.getElementById('rightUrl').value.trim();
+  const id = extractVideoID(url);
+  if(!id){ alert('Invalid right YouTube URL/ID'); return; }
+  rightVideoId = id;
+  if(rightPlayer && rightReady){
+    rightPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
+    rightPlayer.setVolume(0);
+    document.getElementById('rightVolLabel').textContent = '0';
+    updateStatus('right','Loaded');
+  } else {
+    setTimeout(()=>{ document.getElementById('loadRightBtn').click(); }, 300);
+  }
+});
+
+document.getElementById('playLeft').addEventListener('click', ()=>{ if(leftPlayer && leftVideoId) { leftPlayer.playVideo(); updateStatus('left','Playing'); } });
+document.getElementById('pauseLeft').addEventListener('click', ()=>{ if(leftPlayer) { leftPlayer.pauseVideo(); updateStatus('left','Paused'); } });
+document.getElementById('playRight').addEventListener('click', ()=>{ if(rightPlayer && rightVideoId) { rightPlayer.playVideo(); updateStatus('right','Playing'); } });
+document.getElementById('pauseRight').addEventListener('click', ()=>{ if(rightPlayer) { rightPlayer.pauseVideo(); updateStatus('right','Paused'); } });
+
+document.getElementById('playBoth').addEventListener('click', ()=>{
+  if(leftPlayer && leftVideoId){ leftPlayer.playVideo(); updateStatus('left','Playing'); }
+  if(rightPlayer && rightVideoId){ rightPlayer.playVideo(); updateStatus('right','Playing'); }
+});
+document.getElementById('pauseBoth').addEventListener('click', ()=>{
+  if(leftPlayer) leftPlayer.pauseVideo();
+  if(rightPlayer) rightPlayer.pauseVideo();
+  updateStatus('left','Paused'); updateStatus('right','Paused');
+});
+
+document.getElementById('swapLR').addEventListener('click', ()=>{
+  const leftInput = document.getElementById('leftUrl');
+  const rightInput = document.getElementById('rightUrl');
+  const a = leftInput.value; leftInput.value = rightInput.value; rightInput.value = a;
+
+  const tmpId = leftVideoId; leftVideoId = rightVideoId; rightVideoId = tmpId;
+
+  if(leftVideoId && leftPlayer){ leftPlayer.cueVideoById({videoId: leftVideoId, suggestedQuality: 'tiny'}); }
+  if(rightVideoId && rightPlayer){ rightPlayer.cueVideoById({videoId: rightVideoId, suggestedQuality: 'tiny'}); }
+  updateStatus('left','Swapped'); updateStatus('right','Swapped');
+});
+
+const cross = document.getElementById('crossfade');
+cross.addEventListener('input', applyCrossfade);
+function applyCrossfade(){
+  const val = parseInt(cross.value,10);
+  const leftVol = Math.round(100 - val);
+  const rightVol = Math.round(val);
+  if(leftPlayer && leftReady){ leftPlayer.setVolume(leftVol); document.getElementById('leftVolLabel').textContent = leftVol; }
+  if(rightPlayer && rightReady){ rightPlayer.setVolume(rightVol); document.getElementById('rightVolLabel').textContent = rightVol; }
+}
+
+function smoothCrossfade(targetValue) {
+    if (fadeInterval) clearInterval(fadeInterval);
+    const cross = document.getElementById('crossfade');
+    let currentValue = parseInt(cross.value, 10);
+    const step = (currentValue < targetValue) ? 1 : -1;
+
+    fadeInterval = setInterval(() => {
+        currentValue += step;
+        if ( (step === 1 && currentValue >= targetValue) || (step === -1 && currentValue <= targetValue) ) {
+            currentValue = targetValue;
+            clearInterval(fadeInterval);
+        }
+        cross.value = currentValue;
+        applyCrossfade();
+    }, 20); // 20ms interval for smooth transition
+}
+
+function smoothCrossfadeLeft() {
+    smoothCrossfade(0);
+}
+
+function smoothCrossfadeRight() {
+    smoothCrossfade(100);
+}
+
+
+function seekVideo(side, seconds) {
+    let player;
+    if (side === 'left') player = leftPlayer;
+    else player = rightPlayer;
+
+    if (!player) return;
+
+    if (seconds === 'reset') {
+        player.seekTo(0, true);
+    } else {
+        const currentTime = player.getCurrentTime();
+        player.seekTo(currentTime + seconds, true);
+    }
+}
+
+function updateStatus(side, text){
+  if(side==='left') document.getElementById('leftStatus').textContent = text;
+  else document.getElementById('rightStatus').textContent = text;
+}
+
+window.addEventListener('load', ()=>{ applyCrossfade(); updateStatus('left','Idle'); updateStatus('right','Idle'); });
+</script>
+</body>
+</html>
