@@ -1,458 +1,1474 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Kannu Jaat Mixer</title>
-<style>
-  :root{
-    --bg:#0f1720;
-    --card:#0b1220;
-    --accent:#334155;
-    --muted:#94a3b8;
-    --btn:#1e293b;
-    --primary:#60a5fa;
-    --glass: rgba(255,255,255,0.03);
-  }
-  *{box-sizing:border-box;font-family:Inter,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-  body{margin:0;background:linear-gradient(180deg,var(--bg),#071021);color:#cbd5e1;min-height:100vh;padding:18px;}
-  .wrap{max-width:1000px;margin:0 auto;}
-  header{text-align:center;padding:8px 0 20px;}
-  h1{
-    margin:0;
-    font-size:36px;
-    letter-spacing:0.6px;
-    font-family: 'Oswald', sans-serif;
-    transition: color 2s ease-in-out;
-  }
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  .panel{
-    background:var(--card);
-    border-radius:10px;padding:12px;
-    box-shadow:0 6px 20px rgba(2,6,23,0.6);
-    min-height:380px;
-    display:flex;flex-direction:column;
-  }
-  .controls{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
-  .controls input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit}
-  .controls button{padding:8px 10px;border-radius:8px;border:none;background:var(--btn);color:#e6eef8;cursor:pointer}
-  .video-frame{flex:1;background:#000;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-  .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--muted);font-size:13px;}
-  .crossfader{margin:18px 0;background:linear-gradient(90deg,#0b1220 0%,#051021);padding:12px;border-radius:12px;}
-  .slider-row{display:flex;gap:12px;align-items:center;}
-  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:8px}
-  .btn-row{display:flex;gap:10px;margin-top:12px;justify-content:center;}
-  .btn{padding:8px 12px;border-radius:999px;border:none;background:var(--primary);color:#042027;cursor:pointer}
-  .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-  .fade-btn{padding:8px 12px;border-radius:999px;border:none;background:var(--primary);color:#042027;cursor:pointer;margin-top:10px;}
-  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
-  .timeline-controls {
+  <meta charset="UTF-8" />
+  <title>Kannu Jaat Mixing Point — Pro DJ Mixer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <style>
+    :root {
+      --bg:#0f172a;--card:#1e293b;--muted:#94a3b8;--text:#fff;--bord:#334155;
+      --accent:#34d399;--accent2:#60a5fa;--warn:#ef4444;--btn:#334155;--btnH:#475569;
+    }
+    body.day-mode {
+      --bg:#f0f4f8;--card:#e2e8f0;--muted:#475569;--text:#0f172a;--bord:#cbd5e1;
+      --accent:#059669;--accent2:#3b82f6;--warn:#dc2626;--btn:#cbd5e1;--btnH:#94a3b8;
+    }
+    *{box-sizing:border-box}
+    body{
+        margin:0;
+        background:var(--bg);
+        color:var(--text);
+        font:15px/1.5 system-ui,Segoe UI,Roboto,Ubuntu,sans-serif;
+        transition: background 1s cubic-bezier(.4, 0, .2, 1), color 1s cubic-bezier(.4, 0, .2, 1);
+    }
+    .theme-transition-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      transform: translateY(0);
+      transition: transform 1s cubic-bezier(.4, 0, .2, 1);
+    }
+    .theme-transition-overlay.slide-out {
+      transform: translateY(100%);
+    }
+    h1{
+      margin:20px 16px 10px;font-size:52px;font-weight:900;letter-spacing:.4px;text-align:center;
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      text-shadow:0 0 18px rgba(255,255,255,.25);
+      animation: colorChange 28s infinite;
+      background-image: linear-gradient(270deg, #ff9900, #ef4444, #60a5fa, #34d399, #ff006a, #ff0000, #fbbf24);
+      background-size: 600% 100%;
+    }
+    @keyframes colorChange {
+      /* First part: Fast swap (7 seconds total) */
+      0% { opacity: 0.2; background-position: 0% 50%; }
+      1% { opacity: 1; }
+      1% { background-image: linear-gradient(270deg, #ff9900, #ff9900); }
+      3% { background-image: linear-gradient(270deg, #ef4444, #ef4444); }
+      5% { background-image: linear-gradient(270deg, #60a5fa, #60a5fa); }
+      7% { background-image: linear-gradient(270deg, #34d399, #34d399); }
+      9% { background-image: linear-gradient(270deg, #ff006a, #ff006a); }
+      11% { background-image: linear-gradient(270deg, #ff0000, #ff0000); }
+      13% { background-image: linear-gradient(270deg, #fbbf24, #fbbf24); }
+      14% { opacity: 1; }
+
+      /* Second part: Slow gradient change (21 seconds total) */
+      14% { background-image: linear-gradient(270deg, #ff9900, #ef4444, #60a5fa, #34d399, #ff006a, #ff0000, #fbbf24); background-position: 0% 50%; }
+      28% { background-position: 100% 50%; }
+      42% { background-position: 0% 50%; }
+      56% { background-position: 100% 50%; }
+      70% { background-position: 0% 50%; }
+      84% { background-position: 100% 50%; }
+      98% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+    /* Updated Instagram Subtitle Style */
+    .instagram-subtitle {
+        text-align: center;
+        margin: -10px auto 20px;
+        color: var(--muted);
+        font-size: 18px; /* Font size increased */
+        overflow: hidden;
+        white-space: nowrap;
+        max-width: 800px; /* Width increased */
+        width: 100%;
+    }
+    .instagram-subtitle span.swipe {
+        display: inline-block;
+        animation: swipeLeftRight 10s linear infinite;
+        background: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    @keyframes swipeLeftRight {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+    .wrap{max-width:1220px;margin:0 auto;padding:0 12px 28px}
+    .main-section-bg{
+      background:var(--card);
+      border-top:1px solid var(--bord);
+      border-bottom:1px solid var(--bord);
+      padding: 1px 5px 5px;
+    }
+    .topbar{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px;border-radius:12px;margin:12px 12px 12px;
+      /* Naya flex container */
+      justify-content: space-between;
+    }
+    .search-and-suggest {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+      z-index: 10;
+    }
+    .search-and-suggest input[type="text"]{
+      width:100%;background:var(--bg);border:1px solid var(--bord);color:var(--text);
+      padding:10px 12px;border-radius:10px;outline:none;
+    }
+    .btn{background:var(--btn);color:var(--text);border:none;border-radius:10px;padding:10px 14px;cursor:pointer;transition:background .2s}
+    .btn:hover{background:var(--btnH)}
+    .btn.primary{background:linear-gradient(90deg,var(--accent2),var(--accent));color:#06121a;font-weight:800}
+    #suggestions{
+      position: absolute;top: calc(100% + 4px);left: 0;right: 0;z-index: 10;
+      background:var(--card);border:1px solid var(--bord);border-radius:12px;
+      box-shadow:0 8px 16px rgba(0,0,0,.2);
+      max-height:140px;overflow-y:auto;
+      display:none;
+    }
+    .suggestion-item{
+      padding:10px 12px;cursor:pointer;
+      border-bottom:1px solid var(--bord);
+    }
+    .suggestion-item:last-child{border-bottom:none;}
+    .suggestion-item:hover{background:var(--btnH);}
+    .resultsWrap{
+      margin:0 12px 16px; border:1px solid var(--bord); background:var(--bg);
+      border-radius:12px; padding:10px;
+    }
+    .results{
+      max-height:260px; overflow-y:auto;
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;
+    }
+    .card{
+      background:var(--bg);border:1px solid var(--bord);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;
+      position: relative;
+    }
+    .card img{width:100%;aspect-ratio:16/9;object-fit:cover;background:#000}
+    .card .meta{padding:8px 10px}
+    .card h4{font-size:14px;margin:0 0 6px}
+    .card .small{color:var(--muted);font-size:12px}
+    .card .actions{display:flex;gap:6px;padding:8px 10px 10px;flex-wrap:wrap}
+    .duration-badge{
+      position:absolute;bottom:42%;right:8px;
+      background:rgba(0,0,0,.7);color:#fff;
+      font-size:12px;padding:2px 6px;border-radius:4px;
+      font-weight:500;
+    }
+    /* Decks */
+    .decks-container{
+        display:flex;justify-content:center;gap:16px;margin:0 12px;flex-wrap:wrap
+    }
+    .deck{padding:12px;position:relative;flex:1;min-width:300px;max-width:500px}
+    .deck h3{margin:4px 0 10px;font-size:16px}
+    .row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .row input[type="text"], .row select {
+        flex: 1;
+        min-width: 100px;
+        background: var(--bg);
+        border: 1px solid var(--bord);
+        color: var(--text);
+        padding: 8px 10px;
+        border-radius: 10px;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        cursor: pointer;
+    }
+    .players-and-meters-row{
+      display:flex;align-items:center;gap:10px;margin-bottom:12px;
+    }
+    .ifwrap{flex:1;position:relative}
+    iframe{width:100%;height:300px;border:0;border-radius:12px;background:var(--bg)}
+    .warning{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      background:rgba(15,23,42,.88);border:2px dashed var(--warn);border-radius:12px;
+      color:var(--warn);font-weight:900;font-size:14px;padding:10px;text-align:center
+    }
+    /* New Local Audio Decks Style */
+    .local-audio-deck {
+      background: #111a2e;
+      border: 1px solid var(--bord);
+      border-radius: 12px;
+      padding: 16px;
+      height: 300px;
+      position: relative;
       display: flex;
-      gap: 5px;
-      margin-top: 8px;
-  }
-  .timeline-controls button {
-      padding: 5px 8px;
-      font-size: 12px;
-      border-radius: 5px;
-      border: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      transition: all 0.2s ease-in-out;
+    }
+    body.day-mode .local-audio-deck {
+        background: var(--card);
+    }
+    .local-audio-deck.dragover{
+      border-color: var(--accent);
+      background: #141c2c;
+    }
+    .local-audio-deck h4 {
+      margin-top: 0;
+      font-size: 16px;
+      text-align: left;
+      width: 100%;
+    }
+    .local-audio-deck .file-name-container {
+      display: flex;
+      align-items: center;
+      width: 100%;
       background: var(--btn);
-      color: #e6eef8;
+      border-radius: 8px;
+      padding: 8px 12px;
+      gap: 10px;
       cursor: pointer;
-  }
-  @media(max-width:840px){.grid{grid-template-columns:1fr}.wrap{padding:8px)}}
-</style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+    }
+    .local-audio-deck .file-name {
+      color: var(--muted);
+      flex: 1;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .local-audio-deck input[type="file"] {
+      display: none;
+    }
+    .local-audio-deck .file-picker-btn {
+      background: var(--btnH);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .local-audio-deck .playback-container {
+      width: 100%;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .local-audio-deck .playback-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 5px;
+    }
+    .local-audio-deck .playback-row .time-display {
+      font-size: 14px;
+      color: var(--accent);
+      width: 50px;
+      text-align: right;
+    }
+    .local-audio-deck .playback-row .duration-display {
+      font-size: 14px;
+      color: var(--muted);
+      width: 50px;
+      text-align: left;
+    }
+    .local-audio-deck .playback-row input[type="range"] {
+      flex: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      background: #444;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 0;
+    }
+    .local-audio-deck .playback-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .local-audio-deck .controls-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .local-audio-deck .control-btn {
+      background: var(--btnH);
+      color: var(--text);
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .local-audio-deck .control-btn:hover {
+      background: var(--accent);
+      color: #000;
+    }
+    /* Vertical VU meter right next to player */
+    .meter-container{display:flex;gap:2px}
+    .meter{
+      width:28px;height:300px;border-radius:8px;border:1px solid rgba(255,255,255,.15);
+      padding:3px;display:flex;flex-direction:column-reverse;gap:3px;background:rgba(255,255,255,.04)
+    }
+    .seg{flex:1;border:1px solid var(--muted);border-radius:3px;transition:all .15s}
+    .on{border:none}
+    .c1{background:#34d399}.c2{background:#60a5fa}.c3{background:#fbbf24}.c4{background:#ef4444}
+    /* Animation for blinking effect */
+    .blink-fast{animation:bl .22s infinite alternate}
+    .blink-medium{animation:bl .4s infinite alternate}
+    .blink-slow{animation:bl .6s infinite alternate}
+    @keyframes bl{from{opacity:1}to{opacity:.6}}
+    /* crossfader */
+    .xfwrap{margin:18px 12px;padding:12px;border-radius:12px}
+    .xfrow{display:flex;gap:12px;align-items:center}
+    .xfrow input[type="range"]{flex:1;height:10px;border-radius:8px;background:linear-gradient(90deg,var(--accent2),var(--accent));-webkit-appearance:none}
+    .xfrow input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:#fff;border-radius:50%;border:4px solid var(--bg);box-shadow:0 0 8px rgba(0,0,0,.5)}
+    .lab{width:44px;text-align:center;color:var(--muted);font-weight:700}
+    /* Live Clock and Date style */
+    .live-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        min-width: 150px;
+    }
+    .live-info .date-display {
+        color: var(--muted);
+        font-size: 14px;
+    }
+    .live-info .time-display {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--accent);
+    }
+    /* playlist */
+    .list-section{margin:12px;padding:10px;border-radius:12px}
+    .list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    #playlistBox {
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 12px;
+    }
+    #playlistBox::-webkit-scrollbar {
+      width: 8px;
+    }
+    #playlistBox::-webkit-scrollbar-track {
+      background: var(--card);
+      border-radius: 10px;
+    }
+    #playlistBox::-webkit-scrollbar-thumb {
+      background: var(--btnH);
+      border-radius: 10px;
+    }
+    #playlistBox::-webkit-scrollbar-thumb:hover {
+      background: var(--accent2);
+    }
+    .pl-item{
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      background:var(--bg);border:1px solid var(--bord);border-radius:10px;padding:8px 10px;margin:6px 0;
+      cursor:pointer;
+    }
+    .pl-item:hover{background:var(--btnH);}
+    .pl-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    /* API Key Settings */
+    #settingsContainer {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+        align-items: center;
+        justify-content: center;
+    }
+    #settingsBox {
+        background: var(--card);
+        padding: 24px;
+        border-radius: 12px;
+        border: 1px solid var(--bord);
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+    #settingsBox h2 {
+        margin-top: 0;
+        font-size: 24px;
+        color: var(--accent2);
+        text-align: center;
+    }
+    #apiKeyInput {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--bord);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 10px;
+        outline: none;
+        margin-bottom: 10px;
+    }
+    #apiKeySaveBtn, #settingsCloseBtn {
+        width: 100%;
+        margin-top: 10px;
+    }
+    /* Related Videos Section */
+    #relatedVideosSection {
+      margin: 12px;
+      padding: 10px;
+      border-radius: 12px;
+    }
+    #relatedVideosGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      padding: 5px;
+    }
+    #relatedVideosGrid .card {
+      background: var(--bg);
+    }
+    #relatedVideosGrid .card:hover {
+      background: var(--btnH);
+    }
+    .related-video-load-btn {
+      background: var(--btnH);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+    .related-video-load-btn:hover {
+      background: var(--accent);
+      color: #000;
+    }
+    .related-video-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Kannu Jaat mixing Point</h1>
-  </header>
-
-  <div class="grid">
-    <div class="panel" id="leftPanel">
-      <div class="controls">
-        <input id="leftUrl" placeholder="Left video URL (YouTube)" />
-        <button id="loadLeftBtn">Load</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button class="btn secondary" id="playLeft">Play</button>
-        <button class="btn secondary" id="pauseLeft">Pause</button>
-      </div>
-      <div class="video-frame" id="leftPlayerWrap">
-        <div style="color:var(--muted);font-size:14px">Left player</div>
-      </div>
-      <div class="timeline-controls">
-        <button onclick="seekVideo('left', -10)">-10s</button>
-        <button onclick="seekVideo('left', 10)">+10s</button>
-        <button onclick="seekVideo('left', 'reset')">Reset</button>
-      </div>
-      <div class="meta"><div>Vol: <span id="leftVolLabel">100</span></div><div id="leftStatus">Idle</div></div>
-    </div>
-
-    <div class="panel" id="rightPanel">
-      <div class="controls">
-        <input id="rightUrl" placeholder="Right video URL (YouTube)" />
-        <button id="loadRightBtn">Load</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button class="btn secondary" id="playRight">Play</button>
-        <button class="btn secondary" id="pauseRight">Pause</button>
-      </div>
-      <div class="video-frame" id="rightPlayerWrap">
-        <div style="color:var(--muted);font-size:14px">Right player</div>
-      </div>
-      <div class="timeline-controls">
-        <button onclick="seekVideo('right', -10)">-10s</button>
-        <button onclick="seekVideo('right', 10)">+10s</button>
-        <button onclick="seekVideo('right', 'reset')">Reset</button>
-      </div>
-      <div class="meta"><div>Vol: <span id="rightVolLabel">0</span></div><div id="rightStatus">Idle</div></div>
+  <div id="settingsContainer">
+    <div id="settingsBox">
+      <h2>API Key Settings</h2>
+      <p style="font-size:14px;color:var(--muted);text-align:center">अपनी YouTube Data API v3 Key यहां डालें।</p>
+      <input type="text" id="apiKeyInput" placeholder="Enter your API Key here...">
+      <button class="btn primary" id="apiKeySaveBtn">Save Key</button>
+      <button class="btn" id="settingsCloseBtn">Close</button>
     </div>
   </div>
-
-  <div class="crossfader">
-    <div class="slider-row">
-      <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Left</div>
-      <input id="crossfade" type="range" min="0" max="100" value="0" />
-      <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Right</div>
+  
+  <div class="wrap">
+    <h1>🎧 Kannu Jaat Mixing Point 🎶</h1>
+    <div class="instagram-subtitle"><span class="swipe">🔸 IG→ @kannu_jaat_03</span></div>
+  </div>
+  <div class="main-section-bg">
+    <div class="topbar">
+      <div class="search-and-suggest">
+        <input id="searchInput" type="text" placeholder="Search YouTube… (e.g. 'lofi hip hop', 'Arijit live')" autocomplete="off" />
+        <div id="suggestions"></div>
+      </div>
+      <button class="btn primary" id="searchBtn">Search</button>
+      <button class="btn" id="clearSearchBtn">❌</button>
+      <button class="btn" id="themeToggleBtn">☀️</button>
+      <button class="btn" id="openSettingsBtn">⚙️</button>
+      <div class="live-info">
+        <span class="time-display" id="liveTime"></span>
+        <span class="date-display" id="liveDate"></span>
+      </div>
+    </div>
+    
+    <div class="resultsWrap">
+      <div id="results" class="results"></div>
+    </div>
+    
+    <div id="relatedVideosSection" class="list-section">
+      <div class="list-header">
+        <h3>Related Videos <small style="color:var(--muted)">(From playlist channels)</small></h3>
+      </div>
+      <div id="relatedVideosGrid"></div>
     </div>
 
-    <div class="btn-row">
-      <button class="btn" id="playBoth">Play Both</button>
-      <button class="btn secondary" id="pauseBoth">Pause Both</button>
-      <button class="btn secondary" id="swapLR">Swap L ↔ R</button>
-      <button class="btn fade-btn" onclick="smoothCrossfadeLeft()">Fade Left</button>
-      <button class="btn fade-btn" onclick="smoothCrossfadeRight()">Fade Right</button>
+    <div class="players-and-meters-row">
+        <div class="deck" id="leftDeck">
+          <h3>Left YouTube Deck</h3>
+          <div class="row">
+              <input id="leftUrl" type="text" placeholder="Paste YouTube URL or ID" />
+              <button class="btn" onclick="clearUrl('left')">❌</button>
+              <button class="btn" onclick="loadFromUrl('left')">Load</button>
+          </div>
+          <div class="row" style="margin-bottom: 0;">
+              <label for="leftQuality" style="color: var(--muted); font-size: 14px;">Default Quality:</label>
+              <select id="leftQuality">
+                  <option value="auto">Auto</option>
+                  <option value="highres">Highres (4K+)</option>
+                  <option value="hd1080">HD1080 (1080p)</option>
+                  <option value="hd720">HD720 (720p)</option>
+                  <option value="large">Large (480p)</option>
+                  <option value="medium">Medium (360p)</option>
+                  <option value="small">Small (240p)</option>
+                  <option value="tiny">Tiny (144p)</option>
+              </select>
+          </div>
+          <div class="ifwrap">
+            <div id="leftPlayer"></div>
+            <div id="leftWarn" class="warning" style="display:none;"></div>
+          </div>
+          <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:12px">
+            <button class="btn" onclick="playDeck('left')">▶️ Play</button>
+            <button class="btn" onclick="pauseDeck('left')">⏸️ Pause</button>
+            <button class="btn" onclick="seekDeck('left',-10)">⏪ -10s</button>
+            <button class="btn" onclick="seekDeck('left',10)">⏩ +10s</button>
+          </div>
+        </div>
+        <div class="meter-container">
+          <div class="meter" id="leftMeter">
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+          </div>
+          <div class="meter" id="rightMeter">
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+          </div>
+        </div>
+        <div class="deck" id="rightDeck">
+          <h3>Right YouTube Deck</h3>
+          <div class="row">
+            <input id="rightUrl" type="text" placeholder="Paste YouTube URL or ID" />
+            <button class="btn" onclick="clearUrl('right')">❌</button>
+            <button class="btn" onclick="loadFromUrl('right')">Load</button>
+          </div>
+          <div class="row" style="margin-bottom: 0;">
+              <label for="rightQuality" style="color: var(--muted); font-size: 14px;">Default Quality:</label>
+              <select id="rightQuality">
+                  <option value="auto">Auto</option>
+                  <option value="highres">Highres (4K+)</option>
+                  <option value="hd1080">HD1080 (1080p)</option>
+                  <option value="hd720">HD720 (720p)</option>
+                  <option value="large">Large (480p)</option>
+                  <option value="medium">Medium (360p)</option>
+                  <option value="small">Small (240p)</option>
+                  <option value="tiny">Tiny (144p)</option>
+              </select>
+          </div>
+          <div class="ifwrap">
+            <div id="rightPlayer"></div>
+            <div id="rightWarn" class="warning" style="display:none;"></div>
+          </div>
+          <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:12px">
+            <button class="btn" onclick="playDeck('right')">▶️ Play</button>
+            <button class="btn" onclick="pauseDeck('right')">⏸️ Pause</button>
+            <button class="btn" onclick="seekDeck('right',-10)">⏪ -10s</button>
+            <button class="btn" onclick="seekDeck('right',10)">⏩ +10s</button>
+          </div>
+        </div>
+    </div>
+    <div class="xfwrap">
+      <div class="xfrow">
+        <div class="lab">Left</div>
+        <input id="xfader" type="range" min="0" max="100" value="50" />
+        <div class="lab">Right</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="fadeTo('left')">Fade ⬅️ Left</button>
+        <button class="btn" onclick="fadeTo('right')">Fade ➡️ Right</button>
+        <button class="btn primary" onclick="playBoth()">Play Both</button>
+        <button class="btn" onclick="pauseBoth()">Pause Both</button>
+      </div>
+    </div>
+    <div class="players-and-meters-row">
+      <div class="deck">
+        <h3>Local Deck A</h3>
+        <div id="localDeckA" class="local-audio-deck">
+          <input type="file" id="fileInputA" accept="audio/*">
+          <div class="file-name-container">
+            <label for="fileInputA" class="file-picker-btn">Choose File</label>
+            <p class="file-name" id="fileNameA">No file chosen</p>
+          </div>
+          <div class="playback-container">
+            <div class="playback-row">
+              <span class="time-display" id="currentTimeA">0:00</span>
+              <input type="range" id="seekA" value="0" step="1" min="0" max="100">
+              <span class="duration-display" id="durationA">0:00</span>
+            </div>
+            <div class="controls-row">
+              <button class="control-btn" id="playBtnA" onclick="playLocal('A')">Play</button>
+              <button class="control-btn" id="pauseBtnA" onclick="pauseLocal('A')" style="display:none;">Pause</button>
+              <button class="control-btn" onclick="seekLocal('A',-10)">-10s</button>
+              <button class="control-btn" onclick="seekLocal('A',10)">+10s</button>
+              <button class="control-btn" onclick="stopLocal('A')">Stop</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meter-container">
+        <div class="meter" id="localMeterA">
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+        </div>
+        <div class="meter" id="localMeterB">
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+            <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
+        </div>
+      </div>
+      <div class="deck">
+        <h3>Local Deck B</h3>
+        <div id="localDeckB" class="local-audio-deck">
+          <input type="file" id="fileInputB" accept="audio/*">
+          <div class="file-name-container">
+            <label for="fileInputB" class="file-picker-btn">Choose File</label>
+            <p class="file-name" id="fileNameB">No file chosen</p>
+          </div>
+          <div class="playback-container">
+            <div class="playback-row">
+              <span class="time-display" id="currentTimeB">0:00</span>
+              <input type="range" id="seekB" value="0" step="1" min="0" max="100">
+              <span class="duration-display" id="durationB">0:00</span>
+            </div>
+            <div class="controls-row">
+              <button class="control-btn" id="playBtnB" onclick="playLocal('B')">Play</button>
+              <button class="control-btn" id="pauseBtnB" onclick="pauseLocal('B')" style="display:none;">Pause</button>
+              <button class="control-btn" onclick="seekLocal('B',-10)">-10s</button>
+              <button class="control-btn" onclick="seekLocal('B',10)">+10s</button>
+              <button class="control-btn" onclick="stopLocal('B')">Stop</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="list-section">
+      <div class="list-header">
+        <h3>Playlist</h3>
+      </div>
+      <div id="playlistBox"></div>
     </div>
   </div>
-
-  <footer>Serve this file over <strong>http(s)</strong> for reliable embedding. Local server recommended.</footer>
 </div>
-
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
-let leftPlayer, rightPlayer;
-let leftVideoId = null, rightVideoId = null;
-let leftReady=false, rightReady=false;
-let fadeInterval = null;
-let autoCheckInterval = null;
+/* ========= CONFIG ========= */
+const API_KEY_STORAGE_KEY = "youtubeApiKeys";
+const MAX_PLAYLIST_CHANNELS = 5;
+const RELATED_VIDEOS_PER_CHANNEL = 2;
+/* ========= STATE ========= */
+let players = { left:null, right:null };
+let localPlayers = { A: new Audio(), B: new Audio() };
+let isFading = false;
+let playlist = []; // {id,title,channel,channelId,thumb}
+let searchHistory = [];
+let apiKeys = [];
+/* ========= THEME SWITCHER ========= */
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const body = document.body;
+const root = document.documentElement;
 
-let leftPlayTriggered = false;
-let rightPlayTriggered = false;
-let leftFadeTriggered = false;
-let rightFadeTriggered = false;
-
-const PLAY_THRESHOLD = 15;
-const FADE_THRESHOLD = 10;
-
-// Title color change logic
-const title = document.querySelector('h1');
-const colors = ['#60a5fa', '#34d399', '#facc15', '#a78bfa', '#ff5f5f'];
-let colorIndex = 0;
-
-setInterval(() => {
-    title.style.color = colors[colorIndex];
-    colorIndex = (colorIndex + 1) % colors.length;
-}, 5000);
-
-// Priming function to force API to get video duration
-function primeVideo(player, side) {
-  if (player && player.getPlayerState() !== YT.PlayerState.PLAYING) {
-    player.playVideo();
-    setTimeout(() => {
-      player.pauseVideo();
-      updateStatus(side, 'Primed');
-    }, 100);
+const THEMES = {
+  'night-mode': {
+    '--bg':'#0f172a','--card':'#1e293b','--muted':'#94a3b8','--text':'#fff','--bord':'#334155',
+    '--accent':'#34d399','--accent2':'#60a5fa','--warn':'#ef4444','--btn':'#334155','--btnH':'#475569'
+  },
+  'day-mode': {
+    '--bg':'#f0f4f8','--card':'#e2e8f0','--muted':'#475569','--text':'#0f172a','--bord':'#cbd5e1',
+    '--accent':'#059669','--accent2':'#3b82f6','--warn':'#dc2626','--btn':'#cbd5e1','--btnH':'#94a3b8'
   }
-}
+};
 
-// Automatic Crossfade Logic
-function checkAndAutoCrossfade() {
-    // Left Player Check
-    if (leftPlayer && leftReady && leftPlayer.getPlayerState() === YT.PlayerState.PLAYING && leftVideoId) {
-        let duration = leftPlayer.getDuration();
-        if (duration === 0) {
-            primeVideo(leftPlayer, 'left');
-            return;
-        }
-        
-        const remaining = duration - leftPlayer.getCurrentTime();
-
-        // 1. Check for Play Threshold (15 seconds)
-        if (remaining > 0 && remaining <= PLAY_THRESHOLD && rightVideoId && !rightPlayTriggered) {
-            playRightVideo();
-            rightPlayTriggered = true;
-        }
-
-        // 2. Check for Fade Threshold (10 seconds)
-        if (remaining > 0 && remaining <= FADE_THRESHOLD && cross.value !== "100" && !leftFadeTriggered) {
-            smoothCrossfade(100);
-            leftFadeTriggered = true;
-        }
-    }
-
-    // Right Player Check
-    if (rightPlayer && rightReady && rightPlayer.getPlayerState() === YT.PlayerState.PLAYING && rightVideoId) {
-        let duration = rightPlayer.getDuration();
-        if (duration === 0) {
-            primeVideo(rightPlayer, 'right');
-            return;
-        }
-
-        const remaining = duration - rightPlayer.getCurrentTime();
-
-        // 1. Check for Play Threshold (15 seconds)
-        if (remaining > 0 && remaining <= PLAY_THRESHOLD && leftVideoId && !leftPlayTriggered) {
-            playLeftVideo();
-            leftPlayTriggered = true;
-        }
-
-        // 2. Check for Fade Threshold (10 seconds)
-        if (remaining > 0 && remaining <= FADE_THRESHOLD && cross.value !== "0" && !rightFadeTriggered) {
-            smoothCrossfade(0);
-            rightFadeTriggered = true;
-        }
-    }
-}
-
-function startAutoCheck() {
-    if (autoCheckInterval) clearInterval(autoCheckInterval);
-    leftPlayTriggered = false;
-    rightPlayTriggered = false;
-    leftFadeTriggered = false;
-    rightFadeTriggered = false;
-    autoCheckInterval = setInterval(checkAndAutoCrossfade, 1000);
-}
-
-function stopAutoCheck() {
-    if (autoCheckInterval) clearInterval(autoCheckInterval);
-    autoCheckInterval = null;
-}
-
-function onYouTubeIframeAPIReady(){
-  leftPlayer = new YT.Player('leftPlayerWrap', {
-    height: '100%',
-    width: '100%',
-    playerVars:{'controls':1,'rel':0,'modestbranding':1,'playsinline':1},
-    events:{
-      'onReady': (e)=>{ 
-          leftReady=true; 
-          updateStatus('left','Ready'); 
-      },
-      'onStateChange': (e)=>{ }
-    }
-  });
-
-  rightPlayer = new YT.Player('rightPlayerWrap', {
-    height: '100%',
-    width: '100%',
-    playerVars:{'controls':1,'rel':0,'modestbranding':1,'playsinline':1},
-    events:{
-      'onReady': (e)=>{ rightReady=true; updateStatus('right','Ready'); },
-      'onStateChange': (e)=>{ }
-    }
-  });
-}
-
-function extractVideoID(url){
-  if(!url) return null;
-  const idOnly = url.match(/^[A-Za-z0-9_-]{11}$/);
-  if(idOnly) return idOnly[0];
-  const reg = [
-    /v=([A-Za-z0-9_-]{11})/,
-    /youtu\.be\/([A-Za-z0-9_-]{11})/,
-    /\/embed\/([A-Za-z0-9_-]{11})/,
-    /shorts\/([A-Za-z0-9_-]{11})/
-  ];
-  for(let r of reg){
-    const m = url.match(r);
-    if(m && m[1]) return m[1];
+function applyTheme(themeName) {
+  const theme = THEMES[themeName];
+  if (!theme) return;
+  for (const [key, value] of Object.entries(theme)) {
+    root.style.setProperty(key, value);
   }
-  return null;
+  body.classList.remove('night-mode', 'day-mode');
+  body.classList.add(themeName);
+  localStorage.setItem('theme', themeName);
+  themeToggleBtn.textContent = (themeName === 'night-mode') ? '☀️' : '🌙';
 }
 
-document.getElementById('loadLeftBtn').addEventListener('click', ()=>{
-  const url = document.getElementById('leftUrl').value.trim();
-  const id = extractVideoID(url);
-  if(!id){ alert('Invalid left YouTube URL/ID'); return; }
-  leftVideoId = id;
-  if(leftPlayer && leftReady){
-    leftPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
-    applyCrossfade(); 
-    updateStatus('left','Loaded');
-    primeVideo(leftPlayer, 'left'); 
-    leftPlayTriggered = false;
-    rightPlayTriggered = false;
-    leftFadeTriggered = false;
-    rightFadeTriggered = false;
-  } else {
-    setTimeout(()=>{ document.getElementById('loadLeftBtn').click(); }, 300);
-  }
-});
+function toggleTheme() {
+  const currentTheme = body.classList.contains('day-mode') ? 'day-mode' : 'night-mode';
+  const newTheme = (currentTheme === 'night-mode') ? 'day-mode' : 'night-mode';
+  
+  // Create and add overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'theme-transition-overlay';
+  overlay.style.backgroundColor = getComputedStyle(root).getPropertyValue('--bg');
+  document.body.appendChild(overlay);
 
-document.getElementById('loadRightBtn').addEventListener('click', ()=>{
-  const url = document.getElementById('rightUrl').value.trim();
-  const id = extractVideoID(url);
-  if(!id){ alert('Invalid right YouTube URL/ID'); return; }
-  rightVideoId = id;
-  if(rightPlayer && rightReady){
-    rightPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
-    applyCrossfade(); 
-    updateStatus('right','Loaded');
-    primeVideo(rightPlayer, 'right');
-    leftPlayTriggered = false;
-    rightPlayTriggered = false;
-    leftFadeTriggered = false;
-    rightFadeTriggered = false;
-  } else {
-    setTimeout(()=>{ document.getElementById('loadRightBtn').click(); }, 300);
-  }
-});
+  // Animate the overlay
+  setTimeout(() => {
+    overlay.classList.add('slide-out');
+  }, 10);
+  
+  // Change the theme instantly but under the overlay
+  applyTheme(newTheme);
 
-document.getElementById('leftUrl').addEventListener('input', (event) => {
-    const url = event.target.value.trim();
-    if (extractVideoID(url)) {
-        document.getElementById('loadLeftBtn').click();
-    }
-});
-
-document.getElementById('rightUrl').addEventListener('input', (event) => {
-    const url = event.target.value.trim();
-    if (extractVideoID(url)) {
-        document.getElementById('loadRightBtn').click();
-    }
-});
-
-document.getElementById('playLeft').addEventListener('click', ()=>{
-  playLeftVideo();
-});
-document.getElementById('pauseLeft').addEventListener('click', ()=>{ 
-    if(leftPlayer) { 
-        leftPlayer.pauseVideo(); 
-        updateStatus('left','Paused');
-        stopAutoCheck();
-    }
-});
-
-document.getElementById('playRight').addEventListener('click', ()=>{
-    playRightVideo();
-});
-document.getElementById('pauseRight').addEventListener('click', ()=>{ 
-    if(rightPlayer) { 
-        rightPlayer.pauseVideo(); 
-        updateStatus('right','Paused');
-        stopAutoCheck();
-    }
-});
-
-function playLeftVideo() {
-  if (leftPlayer && leftVideoId) {
-    leftPlayer.playVideo();
-    applyCrossfade();
-    updateStatus('left', 'Playing');
-    startAutoCheck();
-  }
+  // Remove the overlay after animation is complete
+  setTimeout(() => {
+    document.body.removeChild(overlay);
+  }, 1000);
 }
 
-function playRightVideo() {
-  if (rightPlayer && rightVideoId) {
-    rightPlayer.playVideo();
-    applyCrossfade();
-    updateStatus('right', 'Playing');
-    startAutoCheck();
-  }
+function loadSavedTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'night-mode';
+  applyTheme(savedTheme);
 }
 
-document.getElementById('playBoth').addEventListener('click', ()=>{
-  if(leftPlayer && leftVideoId){ playLeftVideo(); }
-  if(rightPlayer && rightVideoId){ playRightVideo(); }
-  applyCrossfade(); 
-});
+loadSavedTheme();
+themeToggleBtn.addEventListener('click', toggleTheme);
+/* ========= API KEY SETTINGS ========= */
+const openSettingsBtn = document.getElementById('openSettingsBtn');
+const settingsContainer = document.getElementById('settingsContainer');
+const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const apiKeySaveBtn = document.getElementById('apiKeySaveBtn');
 
-document.getElementById('pauseBoth').addEventListener('click', ()=>{
-  if(leftPlayer) leftPlayer.pauseVideo();
-  if(rightPlayer) rightPlayer.pauseVideo();
-  updateStatus('left','Paused'); updateStatus('right','Paused');
-  stopAutoCheck();
-});
-
-document.getElementById('swapLR').addEventListener('click', ()=>{
-  const leftInput = document.getElementById('leftUrl');
-  const rightInput = document.getElementById('rightUrl');
-  const a = leftInput.value; leftInput.value = rightInput.value; rightInput.value = a;
-
-  const tmpId = leftVideoId; leftVideoId = rightVideoId; rightVideoId = tmpId;
-
-  if(leftVideoId && leftPlayer){ leftPlayer.cueVideoById({videoId: leftVideoId, suggestedQuality: 'tiny'}); }
-  if(rightVideoId && rightPlayer){ rightPlayer.cueVideoById({videoId: rightVideoId, suggestedQuality: 'tiny'}); }
-  updateStatus('left','Swapped'); updateStatus('right','Swapped');
-});
-
-const cross = document.getElementById('crossfade');
-cross.addEventListener('input', applyCrossfade);
-function applyCrossfade(){
-  const val = parseInt(cross.value,10);
-  const leftVol = Math.round(100 - val);
-  const rightVol = Math.round(val);
-  if(leftPlayer && leftReady){ leftPlayer.setVolume(leftVol); document.getElementById('leftVolLabel').textContent = leftVol; }
-  if(rightPlayer && rightReady){ rightPlayer.setVolume(rightVol); document.getElementById('rightVolLabel').textContent = rightVol; }
-}
-
-function smoothCrossfade(targetValue) {
-    if (fadeInterval) clearInterval(fadeInterval);
-    const cross = document.getElementById('crossfade');
-    let currentValue = parseInt(cross.value, 10);
-    const step = (currentValue < targetValue) ? 1 : -1;
-
-    fadeInterval = setInterval(() => {
-        currentValue += step;
-        if ( (step === 1 && currentValue >= targetValue) || (step === -1 && currentValue <= targetValue) ) {
-            currentValue = targetValue;
-            clearInterval(fadeInterval);
-        }
-        cross.value = currentValue;
-        applyCrossfade();
-    }, 20);
-}
-
-function smoothCrossfadeLeft() {
-    smoothCrossfade(0);
-}
-
-function smoothCrossfadeRight() {
-    smoothCrossfade(100);
-}
-
-function seekVideo(side, seconds) {
-    let player;
-    if (side === 'left') player = leftPlayer;
-    else player = rightPlayer;
-
-    if (!player) return;
-
-    if (seconds === 'reset') {
-        player.seekTo(0, true);
+function loadApiKeys() {
+  try {
+    const keys = JSON.parse(localStorage.getItem(API_KEY_STORAGE_KEY));
+    if (Array.isArray(keys) && keys.length > 0) {
+      apiKeys = keys;
+      console.log(`${apiKeys.length} API key(s) loaded.`);
     } else {
-        const currentTime = player.getCurrentTime();
-        player.seekTo(currentTime + seconds, true);
+      console.warn("No API keys found. Please add them in settings.");
+      openSettingsBtn.click();
+    }
+  } catch (e) {
+    console.error("Error loading API keys:", e);
+    openSettingsBtn.click();
+  }
+}
+function saveApiKeys() {
+  const keys = apiKeyInput.value.split(',').map(key => key.trim()).filter(key => key.length > 0);
+  if (keys.length > 0) {
+    localStorage.setItem(API_KEY_STORAGE_KEY, JSON.stringify(keys));
+    apiKeys = keys;
+    alert('API Key(s) saved successfully!');
+    settingsContainer.style.display = 'none';
+  } else {
+    alert('Please enter at least one valid API Key.');
+  }
+}
+openSettingsBtn.addEventListener('click', () => {
+  apiKeyInput.value = apiKeys.join(', ');
+  settingsContainer.style.display = 'flex';
+});
+settingsCloseBtn.addEventListener('click', () => {
+  settingsContainer.style.display = 'none';
+});
+apiKeySaveBtn.addEventListener('click', saveApiKeys);
+window.addEventListener('load', loadApiKeys);
+/* ========= LIVE CLOCK & DATE ========= */
+function updateTimeAndDate() {
+    const now = new Date();
+    const timeElement = document.getElementById('liveTime');
+    const dateElement = document.getElementById('liveDate');
+    
+    // Time format: HH:MM:SS
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+
+    // Date format: DD-MM-YYYY
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const year = now.getFullYear();
+    dateElement.textContent = `${day}-${month}-${year}`;
+}
+
+// Update the time and date every second
+setInterval(updateTimeAndDate, 1000);
+updateTimeAndDate(); // Call it immediately to avoid a 1-second delay
+/* ========= YT IFRAME API ========= */
+function onYouTubeIframeAPIReady(){
+  players.left = new YT.Player('leftPlayer',{
+    height:'300',width:'100%',
+    playerVars:{controls:1,rel:0,iv_load_policy:3,modestbranding:1},
+    events:{
+      'onStateChange': (e)=>handleState('left',e),
+      'onError': (e)=>handleError('left',e)
+    }
+  });
+  players.right = new YT.Player('rightPlayer',{
+    height:'300',width:'100%',
+    playerVars:{controls:1,rel:0,iv_load_policy:3,modestbranding:1},
+    events:{
+      'onStateChange': (e)=>handleState('right',e),
+      'onError': (e)=>handleError('right',e)
+    }
+  });
+  const leftUrlInput = document.getElementById('leftUrl');
+  const rightUrlInput = document.getElementById('rightUrl');
+  leftUrlInput.addEventListener('input', debounce(() => loadFromUrl('left'), 500));
+  rightUrlInput.addEventListener('input', debounce(() => loadFromUrl('right'), 500));
+  loadSearchHistory();
+  setupLocalLoaders();
+  applyCrossfader();
+  // Call this function once at start, and then again when playlist is updated
+  fetchRelatedVideosFromPlaylist(); 
+}
+function debounce(func, delay) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), delay);
+  };
+}
+/* ========= UTIL ========= */
+function getIdFromUrl(u){
+  if(!u) return "";
+  if(/^[a-zA-Z0-9_-]{11}$/.test(u)) return u;
+  try{
+    const url=new URL(u.trim());
+    if(url.hostname.includes('youtu.be')) return url.pathname.slice(1);
+    if(url.hostname.includes('youtube.com')){
+      if(url.searchParams.get('v')) return url.searchParams.get('v');
+      const p=url.pathname.split('/'); return p[p.length-1];
+    }
+  }catch{}
+  return "";
+}
+function showWarn(side,msg){
+  const el = document.getElementById(side+'Warn');
+  el.textContent = msg;
+  el.style.display = 'flex';
+}
+function hideWarn(side){
+  const el = document.getElementById(side+'Warn');
+  el.style.display = 'none';
+}
+function formatTime(s){
+  if (isNaN(s)) return '0:00';
+  const minutes = Math.floor(s / 60);
+  const seconds = Math.floor(s % 60);
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
+/* ========= YOUTUBE CONTROLS ========= */
+function loadFromUrl(side){
+  const inputId = side === 'left' ? 'leftUrl' : 'rightUrl';
+  const selectId = side === 'left' ? 'leftQuality' : 'rightQuality';
+  const id = getIdFromUrl(document.getElementById(inputId).value);
+  const quality = document.getElementById(selectId).value;
+  if(!id){ 
+    showWarn(side, "⚠️ Invalid YouTube URL/ID"); 
+    return; 
+  }
+  hideWarn(side);
+  players[side].cueVideoById({
+    videoId: id,
+    suggestedQuality: quality === 'auto' ? undefined : quality
+  });
+  applyCrossfader();
+}
+function cueToDeck(side,id){
+  hideWarn(side);
+  if(!id) return;
+  const selectId = side === 'left' ? 'leftQuality' : 'rightQuality';
+  const quality = document.getElementById(selectId).value;
+  players[side].cueVideoById({
+    videoId: id,
+    suggestedQuality: quality === 'auto' ? undefined : quality
+  });
+  applyCrossfader();
+}
+function playDeck(side){ try{ players[side].playVideo(); }catch{} }
+function pauseDeck(side){ try{ players[side].pauseVideo(); }catch{} }
+function seekDeck(side,secs){
+  try{
+    const t=players[side].getCurrentTime ? players[side].getCurrentTime() : 0;
+    players[side].seekTo(Math.max(0,t+secs),true);
+  }catch{}
+}
+function playBoth(){
+    playDeck('left');
+    playDeck('right');
+    playLocal('A');
+    playLocal('B');
+}
+function pauseBoth(){
+    pauseDeck('left');
+    pauseDeck('right');
+    pauseLocal('A');
+    pauseLocal('B');
+}
+function clearUrl(side){
+  const inputId = side==='left'?'leftUrl':'rightUrl';
+  document.getElementById(inputId).value = '';
+}
+/* ========= LOCAL AUDIO CONTROLS ========= */
+function setupLocalLoaders() {
+  const localDecks = { A: document.getElementById('localDeckA'), B: document.getElementById('localDeckB') };
+  const fileInputs = { A: document.getElementById('fileInputA'), B: document.getElementById('fileInputB') };
+  const fileNames = { A: document.getElementById('fileNameA'), B: document.getElementById('fileNameB') };
+  const seeks = { A: document.getElementById('seekA'), B: document.getElementById('seekB') };
+  const currentTimes = { A: document.getElementById('currentTimeA'), B: document.getElementById('currentTimeB') };
+  const durations = { A: document.getElementById('durationA'), B: document.getElementById('durationB') };
+  for (const side in localDecks) {
+    const deck = localDecks[side];
+    const input = fileInputs[side];
+    const player = localPlayers[side];
+    const seekbar = seeks[side];
+    input.addEventListener('change', (e) => loadLocalFile(side, e.target.files[0]));
+    deck.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      deck.classList.add('dragover');
+    });
+    deck.addEventListener('dragleave', () => { deck.classList.remove('dragover'); });
+    deck.addEventListener('drop', (e) => {
+      e.preventDefault();
+      deck.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        loadLocalFile(side, e.dataTransfer.files[0]);
+      }
+    });
+    player.addEventListener('loadedmetadata', () => {
+      durations[side].textContent = formatTime(player.duration);
+      seekbar.max = player.duration;
+    });
+    player.addEventListener('timeupdate', () => {
+      currentTimes[side].textContent = formatTime(player.currentTime);
+      if (!seekbar.isDragging) {
+          seekbar.value = player.currentTime;
+      }
+    });
+    player.addEventListener('ended', () => {
+        document.getElementById(`playBtn${side}`).style.display = 'block';
+        document.getElementById(`pauseBtn${side}`).style.display = 'none';
+        updateMeters();
+    });
+    seekbar.addEventListener('input', () => {
+      seekbar.isDragging = true;
+      currentTimes[side].textContent = formatTime(seekbar.value);
+    });
+    seekbar.addEventListener('change', () => {
+      player.currentTime = seekbar.value;
+      seekbar.isDragging = false;
+    });
+    document.getElementById(`playBtn${side}`).addEventListener('click', () => {
+      document.getElementById(`playBtn${side}`).style.display = 'none';
+      document.getElementById(`pauseBtn${side}`).style.display = 'block';
+    });
+    document.getElementById(`pauseBtn${side}`).addEventListener('click', () => {
+      document.getElementById(`playBtn${side}`).style.display = 'block';
+      document.getElementById(`pauseBtn${side}`).style.display = 'none';
+    });
+  }
+}
+function loadLocalFile(side, file) {
+  if (!file || !file.type.startsWith('audio/')) {
+    alert('Please select a valid audio file.');
+    return;
+  }
+  const fileNameEl = document.getElementById(`fileName${side}`);
+  if (localPlayers[side].src) URL.revokeObjectURL(localPlayers[side].src);
+  localPlayers[side].src = URL.createObjectURL(file);
+  localPlayers[side].load();
+  fileNameEl.textContent = file.name;
+  document.getElementById(`playBtn${side}`).style.display = 'block';
+  document.getElementById(`pauseBtn${side}`).style.style.display = 'none';
+}
+function playLocal(side) {
+  if (localPlayers[side].src) {
+    localPlayers[side].play().catch(e => console.error("Playback failed:", e));
+    document.getElementById(`playBtn${side}`).style.display = 'none';
+    document.getElementById(`pauseBtn${side}`).style.display = 'block';
+    updateMeters();
+  }
+}
+function pauseLocal(side) {
+  localPlayers[side].pause();
+  document.getElementById(`playBtn${side}`).style.display = 'block';
+  document.getElementById(`pauseBtn${side}`).style.display = 'none';
+  updateMeters();
+}
+function stopLocal(side) {
+  localPlayers[side].pause();
+  localPlayers[side].currentTime = 0;
+  document.getElementById(`playBtn${side}`).style.display = 'block';
+  document.getElementById(`pauseBtn${side}`).style.display = 'none';
+  updateMeters();
+}
+function seekLocal(side, secs){
+  const player = localPlayers[side];
+  if(player.src){
+    player.currentTime = Math.max(0, player.currentTime + secs);
+  }
+}
+/* ========= CROSSFADER & VOLUME ========= */
+const xf = document.getElementById('xfader');
+xf.addEventListener('input', applyCrossfader);
+function applyCrossfader(){
+  const v = parseInt(xf.value,10);
+  const L = 100 - v;
+  const R = v;
+  try{ players.left.setVolume(L); }catch{}
+  try{ players.right.setVolume(R); }catch{}
+  localPlayers.A.volume = L / 100;
+  localPlayers.B.volume = R / 100;
+  updateMeters();
+}
+function fadeTo(side){
+  if(isFading) return;
+  isFading = true;
+  const step = side==='left' ? -4 : 4;
+  const timer = setInterval(()=>{
+    let val = parseInt(xf.value,10)+step;
+    val = Math.max(0,Math.min(100,val));
+    xf.value = val;
+    applyCrossfader();
+    if((side==='left' && val===0) || (side==='right' && val===100)){
+      clearInterval(timer); isFading=false;
+    }
+  },35);
+}
+/* ========= STATE/ERROR + VU METERS ========= */
+function handleState(side,e){
+  if(e.data===YT.PlayerState.PLAYING){
+    setTimeout(()=>{
+      try{
+        const v = players[side].getVideoData();
+        if(v && v.video_id){
+          if(!playlist.find(x=>x.id===v.video_id)){
+             addToPlaylist({id:v.video_id,title:v.title||'(Untitled)',channel:v.author||'',channelId:v.channelId,thumb:`https://i.ytimg.com/vi/${v.video_id}/hqdefault.jpg`});
+          }
+        }
+      }catch{}
+    },2000);
+  }
+  updateMeters();
+}
+function handleError(side,e){
+  const code = e && e.data;
+  let msg = "⚠️ Error loading video.";
+  if(code===2){ msg = "⚠️ Invalid video parameter/ID."; }
+  else if(code===5){ msg = "⚠️ Playback issue (HTML5). Try another video."; }
+  else if(code===100){ msg = "⚠️ Video unavailable / private."; }
+  else if(code===101 || code===150){ msg = "⚠️ Blocked by YouTube. Use a different video."; }
+  showWarn(side,msg);
+}
+function updateMeters(){
+  const leftSegs = Array.from(document.querySelectorAll('#leftMeter .seg'));
+  const rightSegs = Array.from(document.querySelectorAll('#rightMeter .seg'));
+  const localSegsA = Array.from(document.querySelectorAll('#localMeterA .seg'));
+  const localSegsB = Array.from(document.querySelectorAll('#localMeterB .seg'));
+  const v = parseInt(xf.value,10), L = 100 - v, R = v;
+  const lPlaying = isPlaying('left');
+  const rPlaying = isPlaying('right');
+  const localAPlaying = isLocalPlaying('A');
+  const localBPlaying = isLocalPlaying('B');
+  paintMeter(leftSegs, lPlaying ? Math.round(L/10) : 0);
+  paintMeter(rightSegs, rPlaying ? Math.round(R/10) : 0);
+  paintMeter(localSegsA, localAPlaying ? Math.round(L/10) : 0);
+  paintMeter(localSegsB, localBPlaying ? Math.round(R/10) : 0);
+}
+function isPlaying(side){
+  try{
+    const st = players[side].getPlayerState();
+    return st===YT.PlayerState.PLAYING || st===YT.PlayerState.BUFFERING;
+  }catch{return false}
+}
+function isLocalPlaying(side){
+  const player = localPlayers[side];
+  return !player.paused && !player.ended && player.src;
+}
+function paintMeter(segs, lit){
+  segs.forEach((s,i)=>{
+    s.className='seg';
+    if(i<lit){
+      const cls = i<3 ? 'c1' : i<6 ? 'c2' : i<9 ? 'c3' : 'c4';
+      s.classList.add('on',cls);
+      if(i === 9) s.classList.add('blink-fast');
+      else if(i === 8) s.classList.add('blink-medium');
+      else if(i === 7) s.classList.add('blink-slow');
+    }
+  });
+}
+/* ========= SEARCH & HISTORY ========= */
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+const suggestionsEl = document.getElementById('suggestions');
+searchBtn.addEventListener('click', doSearch);
+searchInput.addEventListener('keydown', (e)=>{ 
+  if(e.key==='Enter') {
+    e.preventDefault();
+    doSearch();
+    hideSuggestions();
+  }
+});
+searchInput.addEventListener('focus', () => {
+  const q = searchInput.value.trim();
+  if (q.length === 0) {
+    renderHistoryInDropdown();
+  } else {
+    getSuggestions(q);
+  }
+});
+searchInput.addEventListener('input', debounce(() => {
+  const q = searchInput.value.trim();
+  if (q.length > 0) {
+    getSuggestions(q);
+  } else {
+    renderHistoryInDropdown();
+  }
+}, 300));
+clearSearchBtn.addEventListener('click', clearSearchResults);
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-and-suggest')) {
+    hideSuggestions();
+  }
+});
+function clearSearchResults() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('results').innerHTML = '';
+  hideSuggestions();
+}
+function hideSuggestions() {
+  suggestionsEl.style.display = 'none';
+}
+function renderSuggestions(suggestions) {
+  suggestionsEl.innerHTML = '';
+  if (suggestions.length === 0) {
+    hideSuggestions();
+    return;
+  }
+  suggestions.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    item.textContent = s;
+    item.onclick = () => {
+      searchInput.value = s;
+      doSearch();
+      hideSuggestions();
+    };
+    suggestionsEl.appendChild(item);
+  });
+  suggestionsEl.style.display = 'block';
+}
+function renderHistoryInDropdown() {
+  suggestionsEl.innerHTML = '';
+  if (searchHistory.length === 0) {
+    hideSuggestions();
+    return;
+  }
+  const historyItems = searchHistory.slice(0, 3);
+  historyItems.forEach(query => {
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    item.textContent = query;
+    item.onclick = () => {
+      searchInput.value = query;
+      doSearch();
+      hideSuggestions();
+    };
+    suggestionsEl.appendChild(item);
+  });
+  suggestionsEl.style.display = 'block';
+}
+async function doSearch(){
+  const q = searchInput.value.trim();
+  const resultsEl = document.getElementById('results');
+  if(!q){ clearSearchResults(); return; }
+  resultsEl.innerHTML = '<div style="color:var(--muted)">Searching…</div>';
+  addSearchToHistory(q);
+  
+  for(let i = 0; i < apiKeys.length; i++){
+    const apiKey = apiKeys[i];
+    try{
+      const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
+      searchUrl.searchParams.set('part','snippet');
+      searchUrl.searchParams.set('type','video');
+      searchUrl.searchParams.set('maxResults','20');
+      searchUrl.searchParams.set('q',q);
+      searchUrl.searchParams.set('key',apiKey);
+      const searchRes = await fetch(searchUrl);
+      
+      if(!searchRes.ok){
+        const errorData = await searchRes.json();
+        if(errorData.error.code === 403 && errorData.error.errors[0].reason === "quotaExceeded"){
+          console.warn(`Quota exceeded for API Key ${i+1}. Trying next key...`);
+          if(i < apiKeys.length - 1){
+            resultsEl.innerHTML = `<div style="color:#fbbf24">Quota exhausted for Key ${i+1}. Switching to Key ${i+2}...</div>`;
+            continue; // Go to the next iteration of the loop (next key)
+          } else {
+            throw new Error('All API key quotas have been exhausted.');
+          }
+        } else {
+          throw new Error('HTTP '+searchRes.status + ' - ' + errorData.error.message);
+        }
+      }
+      
+      const searchData = await searchRes.json();
+      const videoIds = searchData.items.map(item => item.id.videoId).filter(Boolean);
+      if (videoIds.length === 0) {
+        resultsEl.innerHTML = '<div style="color:var(--muted)">No results found.</div>';
+        return;
+      }
+      
+      const videosUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
+      videosUrl.searchParams.set('part', 'snippet,contentDetails,status');
+      videosUrl.searchParams.set('id', videoIds.join(','));
+      videosUrl.searchParams.set('key', apiKey);
+      const videosRes = await fetch(videosUrl);
+      
+      if(!videosRes.ok){
+        const errorData = await videosRes.json();
+        if(errorData.error.code === 403 && errorData.error.errors[0].reason === "quotaExceeded"){
+          console.warn(`Quota exceeded for API Key ${i+1}. Trying next key...`);
+          if(i < apiKeys.length - 1){
+            resultsEl.innerHTML = `<div style="color:#fbbf24">Quota exhausted for Key ${i+1}. Switching to Key ${i+2}...</div>`;
+            continue; // Go to the next iteration
+          } else {
+            throw new Error('All API key quotas have been exhausted.');
+          }
+        } else {
+          throw new Error('HTTP '+videosRes.status + ' - ' + errorData.error.message);
+        }
+      }
+      
+      const videosData = await videosRes.json();
+      const filteredItems = videosData.items.filter(item => 
+        item.status.embeddable && item.status.privacyStatus !== 'private'
+      );
+      renderResults(filteredItems);
+      return; // If successful, exit the function
+      
+    }catch(err){
+      if(i === apiKeys.length - 1){
+        resultsEl.innerHTML = `<div style="color:#fca5a5">Search error: ${escapeHtml(err.message||err)}</div>`;
+        return; // All keys failed, so display the error and stop
+      }
+      // If there's an error and it's not the last key, the loop will just continue
+    }
+  }
+}
+function parseDuration(iso){
+  if (!iso) return '';
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return '';
+  const h = parseInt(match[1] || 0, 10);
+  const m = parseInt(match[2] || 0, 10);
+  const s = parseInt(match[3] || 0, 10);
+  let parts = [];
+  if (h > 0) {
+    parts.push(h);
+    parts.push(String(m).padStart(2, '0'));
+    parts.push(String(s).padStart(2, '0'));
+  } else {
+    parts.push(m);
+    parts.push(String(s).padStart(2, '0'));
+  }
+  return parts.join(':');
+}
+function renderResults(items){
+  const resultsEl = document.getElementById('results');
+  if(!items.length){ resultsEl.innerHTML = '<div style="color:var(--muted)">No results or all videos are blocked/private.</div>'; return; }
+  resultsEl.innerHTML = '';
+  items.forEach(it=>{
+    const id = it.id;
+    const sn = it.snippet || {};
+    const thumb = sn.thumbnails && (sn.thumbnails.medium||sn.thumbnails.default);
+    const durationText = parseDuration(it.contentDetails.duration);
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerHTML = `
+      <img alt="" src="${thumb?thumb.url:''}">
+      ${durationText ? `<span class="duration-badge">${durationText}</span>` : ''}
+      <div class="meta">
+        <h4 title="${escapeHtml(sn.title||'')}">${escapeHtml(sn.title||'(Untitled)')}</h4>
+        <div class="small">${escapeHtml(sn.channelTitle||'')}</div>
+      </div>
+      <div class="actions">
+        <button class="btn" ${id?'':'disabled'} onclick="cueToDeck('left','${id||''}')">Load Left</button>
+        <button class="btn" ${id?'':'disabled'} onclick="cueToDeck('right','${id||''}')">Load Right</button>
+        <button class="btn" ${id?'':'disabled'} onclick="addToPlaylist({id:'${id||''}',title:\`${escapeBacktick(sn.title||'(Untitled)')}\`,channel:\`${escapeBacktick(sn.channelTitle||'')}\`,channelId:\`${sn.channelId}\`,thumb:'${thumb?thumb.url:''}'})">＋ Playlist</button>
+      </div>
+    `;
+    resultsEl.appendChild(card);
+  });
+}
+function addToPlaylist(item){
+  if(!item || !item.id) return;
+  const existing = playlist.find(x=>x.id===item.id);
+  if(!existing){
+    playlist.unshift(item); // Add to the start
+  } else {
+    // Move existing item to the top
+    const index = playlist.indexOf(existing);
+    if(index > -1) {
+      playlist.splice(index, 1);
+      playlist.unshift(existing);
+    }
+  }
+  renderPlaylist();
+  fetchRelatedVideosFromPlaylist();
+}
+function removeFromPlaylist(id){
+  playlist = playlist.filter(x=>x.id!==id);
+  renderPlaylist();
+  fetchRelatedVideosFromPlaylist();
+}
+function renderPlaylist(){
+  const box = document.getElementById('playlistBox');
+  box.innerHTML = '';
+  if(!playlist.length){
+    box.innerHTML = `<div style="color:var(--muted)">Playlist empty. Search se songs add karo.</div>`;
+    return;
+  }
+  playlist.forEach(it=>{
+    const row = document.createElement('div');
+    row.className='pl-item';
+    row.innerHTML = `
+      <div class="pl-title" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn" onclick="cueToDeck('left','${it.id}')">▶️ Left</button>
+        <button class="btn" onclick="cueToDeck('right','${it.id}')">▶️ Right</button>
+        <button class="btn" onclick="removeFromPlaylist('${it.id}')">🗑️</button>
+      </div>
+    `;
+    box.appendChild(row);
+  });
+}
+function loadSearchHistory() {
+  try {
+    const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+    searchHistory = history;
+  } catch (e) {
+    console.error("Could not load search history from localStorage:", e);
+    searchHistory = [];
+  }
+}
+function saveSearchHistory() {
+  localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+}
+function addSearchToHistory(query) {
+  if (!query) return;
+  const index = searchHistory.indexOf(query);
+  if (index > -1) {
+    searchHistory.splice(index, 1);
+  }
+  searchHistory.unshift(query);
+  if (searchHistory.length > 10) {
+    searchHistory = searchHistory.slice(0, 10);
+  }
+  saveSearchHistory();
+}
+/* ========= RELATED VIDEOS LOGIC ========= */
+async function fetchRelatedVideosFromPlaylist() {
+    const relatedGrid = document.getElementById('relatedVideosGrid');
+    if (playlist.length === 0) {
+        relatedGrid.innerHTML = '<div style="color:var(--muted)">Add songs to the playlist to see related videos.</div>';
+        return;
+    }
+
+    relatedGrid.innerHTML = '<div style="color:var(--muted)">Finding related videos...</div>';
+
+    // Get unique channel IDs from the first few items of the playlist
+    const uniqueChannels = [];
+    const addedChannelIds = new Set();
+    for (const item of playlist) {
+        if (item.channelId && !addedChannelIds.has(item.channelId)) {
+            uniqueChannels.push({ id: item.channelId, title: item.channel });
+            addedChannelIds.add(item.channelId);
+            if (uniqueChannels.length >= MAX_PLAYLIST_CHANNELS) break;
+        }
+    }
+    if (uniqueChannels.length === 0) {
+        relatedGrid.innerHTML = '<div style="color:var(--muted)">No channel information available in the playlist.</div>';
+        return;
+    }
+
+    let allRelatedVideos = [];
+
+    for (const channel of uniqueChannels) {
+        const channelId = channel.id;
+        let apiKey = '';
+        let fetchedSuccessfully = false;
+        
+        for (let i = 0; i < apiKeys.length; i++) {
+            apiKey = apiKeys[i];
+            try {
+                const playlistsUrl = new URL('https://www.googleapis.com/youtube/v3/channels');
+                playlistsUrl.searchParams.set('part', 'contentDetails');
+                playlistsUrl.searchParams.set('id', channelId);
+                playlistsUrl.searchParams.set('key', apiKey);
+                const playlistsRes = await fetch(playlistsUrl);
+                
+                if (!playlistsRes.ok) throw new Error('API Error fetching channel data');
+                
+                const playlistsData = await playlistsRes.json();
+                const uploadsPlaylistId = playlistsData.items[0]?.contentDetails?.relatedPlaylists?.uploads;
+                if (!uploadsPlaylistId) continue;
+                
+                const videosUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+                videosUrl.searchParams.set('part', 'snippet,contentDetails');
+                videosUrl.searchParams.set('playlistId', uploadsPlaylistId);
+                videosUrl.searchParams.set('maxResults', RELATED_VIDEOS_PER_CHANNEL);
+                videosUrl.searchParams.set('key', apiKey);
+                const videosRes = await fetch(videosUrl);
+                
+                if (!videosRes.ok) throw new Error('API Error fetching playlist items');
+                
+                const videosData = await videosRes.json();
+                const videos = videosData.items.map(item => ({
+                    id: item.snippet.resourceId.videoId,
+                    title: item.snippet.title,
+                    channel: item.snippet.channelTitle,
+                    thumb: item.snippet.thumbnails.medium.url,
+                    duration: item.contentDetails.duration
+                }));
+                allRelatedVideos.push(...videos);
+                fetchedSuccessfully = true;
+                break; // Exit inner loop, move to next channel
+            } catch (err) {
+                console.error(`Error with API key ${i + 1}: `, err);
+                if (i === apiKeys.length - 1) {
+                    relatedGrid.innerHTML = `<div style="color:#fca5a5">Could not load related videos. All API key quotas may be exhausted.</div>`;
+                    return; // All keys failed, stop trying.
+                }
+                // Try next key
+            }
+        }
+    }
+
+    if (allRelatedVideos.length > 0) {
+        renderRelatedVideos(allRelatedVideos);
+    } else {
+        relatedGrid.innerHTML = '<div style="color:var(--muted)">No related videos found for these channels.</div>';
     }
 }
 
-function updateStatus(side, text){
-  if(side==='left') document.getElementById('leftStatus').textContent = text;
-  else document.getElementById('rightStatus').textContent = text;
+function renderRelatedVideos(items) {
+    const relatedGrid = document.getElementById('relatedVideosGrid');
+    relatedGrid.innerHTML = '';
+    items.forEach(it => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <img alt="" src="${escapeHtml(it.thumb)}">
+            <div class="meta" style="padding: 10px 10px 0;">
+                <h4 title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</h4>
+                <div class="small">${escapeHtml(it.channel)}</div>
+            </div>
+            <div class="related-video-actions">
+                <button class="related-video-load-btn" onclick="cueToDeck('left','${it.id}')">Load Left</button>
+                <button class="related-video-load-btn" onclick="cueToDeck('right','${it.id}')">Load Right</button>
+            </div>
+        `;
+        relatedGrid.appendChild(card);
+    });
 }
-
-window.addEventListener('load', ()=>{ 
-    applyCrossfade(); 
-    updateStatus('left','Idle'); 
-    updateStatus('right','Idle'); 
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
+function escapeBacktick(s){return (s||'').replace(/`/g,'\\`')}
+/* ========= INIT ========= */
+window.addEventListener('beforeunload',(e)=>{
+  try{
+    const lp = players.left?.getPlayerState?.()===1;
+    const rp = players.right?.getPlayerState?.()===1;
+    const lpa = localPlayers.A.src && !localPlayers.A.paused;
+    const lpb = localPlayers.B.src && !localPlayers.B.paused;
+    if(lp||rp||lpa||lpb){ e.preventDefault(); e.returnValue=''; }
+  }catch{}
 });
+setInterval(updateMeters,160);
 </script>
 </body>
-  </html>
-  
+</html>
